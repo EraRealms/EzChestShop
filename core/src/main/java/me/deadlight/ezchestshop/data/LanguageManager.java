@@ -1,15 +1,15 @@
 package me.deadlight.ezchestshop.data;
 
 import de.themoep.minedown.MineDown;
+import me.deadlight.ezchestshop.EzChestShop;
 import me.deadlight.ezchestshop.commands.EcsAdmin;
 import me.deadlight.ezchestshop.commands.MainCommands;
 import me.deadlight.ezchestshop.data.gui.GuiData;
-import me.deadlight.ezchestshop.EzChestShop;
 import me.deadlight.ezchestshop.listeners.ChatListener;
-import me.deadlight.ezchestshop.utils.objects.CheckProfitEntry;
-import me.deadlight.ezchestshop.utils.objects.ShopSettings;
 import me.deadlight.ezchestshop.utils.Utils;
 import me.deadlight.ezchestshop.utils.XPEconomy;
+import me.deadlight.ezchestshop.utils.objects.CheckProfitEntry;
+import me.deadlight.ezchestshop.utils.objects.ShopSettings;
 import net.md_5.bungee.api.chat.*;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -192,28 +192,7 @@ public class LanguageManager {
      * @return a String or one of it's fallbacks.
      */
     private List<String> getList(String string) {
-        List<String> result = languageConfig.getStringList(string);
-        if (result == null || result.isEmpty()) {
-            if (EzChestShop.getPlugin().getResource("translations/" + Config.language + ".yml") != null) {
-                result = YamlConfiguration.loadConfiguration(
-                                new InputStreamReader(EzChestShop.getPlugin().
-                                        getResource("translations/" + Config.language + ".yml")))
-                        .getStringList(string);
-            }
-            if (result == null || result.isEmpty()) {
-                result = YamlConfiguration.loadConfiguration(
-                        new File(EzChestShop.getPlugin().getDataFolder(),
-                                "translations/Locale_EN.yml"))
-                        .getStringList(string);
-                if (result == null || result.isEmpty()) {
-                    result = new ArrayList<>(YamlConfiguration.loadConfiguration(
-                            new InputStreamReader(EzChestShop.getPlugin().
-                                    getResource("translations/Locale_EN.yml")))
-                            .getStringList(string));
-                }
-            }
-        }
-        return result;
+        return languageConfig.getStringList(string);
     }
 
 
