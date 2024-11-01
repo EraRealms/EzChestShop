@@ -10,6 +10,7 @@ import me.deadlight.ezchestshop.data.gui.GuiData;
 import me.deadlight.ezchestshop.data.LanguageManager;
 import me.deadlight.ezchestshop.data.ShopContainer;
 import me.deadlight.ezchestshop.integrations.AdvancedRegionMarket;
+import me.deadlight.ezchestshop.listeners.ItemsAdderListener;
 import me.deadlight.ezchestshop.listeners.*;
 import me.deadlight.ezchestshop.tasks.LoadedChunksTask;
 import me.deadlight.ezchestshop.utils.*;
@@ -109,8 +110,6 @@ public final class EzChestShop extends JavaPlugin {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        GuiData.loadGuiData();
         try {
             GuiData.checkForGuiDataYMLupdate();
         } catch (IOException e) {
@@ -283,13 +282,11 @@ public final class EzChestShop extends JavaPlugin {
         if (Config.check_for_removed_shops) {
             LoadedChunksTask.startTask();
         }
-
-        UpdateChecker checker = new UpdateChecker();
-        checker.check();
     }
 
     private void registerListeners() {
         getServer().getPluginManager().registerEvents(new ChestOpeningListener(), this);
+        getServer().getPluginManager().registerEvents(new ItemsAdderListener(new UpdateChecker()), this);
         getServer().getPluginManager().registerEvents(new BlockBreakListener(), this);
         getServer().getPluginManager().registerEvents(new BlockPlaceListener(), this);
         getServer().getPluginManager().registerEvents(new PlayerTransactionListener(), this);

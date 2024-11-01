@@ -13,6 +13,7 @@ softdepend:
   - PlaceholderAPI
   - Towny
   - AdvancedRegionMarket
+  - ItemsAdder
 authors: [ItzAmirreza, ElitoGame]
 description: ${project.description}
 commands:

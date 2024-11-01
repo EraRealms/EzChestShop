@@ -1,5 +1,7 @@
 package me.deadlight.ezchestshop.data.gui;
 
+import dev.lone.itemsadder.api.CustomStack;
+import dev.lone.itemsadder.api.ItemsAdder;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.enchantments.Enchantment;
@@ -26,7 +28,9 @@ public class ContainerGuiItem {
 
     public static ContainerGuiItem fromPath(FileConfiguration config, String path) {
         ItemStack item;
-        if (config.contains(path + ".material")) {
+        if(config.contains(path + ".items-adder")) {
+            item = CustomStack.getInstance(config.getString(path + ".items-adder")).getItemStack();
+        } else if (config.contains(path + ".material")) {
             String material = config.getString(path + ".material");
             if (material == null || material.equals("")) {
                 item = new ItemStack(Material.AIR);
