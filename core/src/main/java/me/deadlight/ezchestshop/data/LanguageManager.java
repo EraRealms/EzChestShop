@@ -195,7 +195,16 @@ public class LanguageManager {
         return languageConfig.getStringList(string);
     }
 
+    public String buyAllTitle() {
+        return Utils.colorify(getString("shop-gui.buttons.buy-all-title"));
+    }
 
+    public List<String> buyAllLore(double price) {
+        return getList("shop-gui.buttons.buy-all-lore").stream()
+                .map(s -> Utils.colorify(s.replace("%price%", price <= 0 ? "-" : Utils.formatNumber(price, Utils.FormatType.GUI))
+                        .replace("%currency%", price <= 0 ? "" : Config.currency)))
+                .collect(Collectors.toList());
+    }
 
     //shop-gui.
     /**
@@ -260,9 +269,33 @@ public class LanguageManager {
 
         return Utils.colorify(getString("shop-gui.buttons.storage"));
     }
+
+    public List<String> buttonStorageLore() {
+        return getList("shop-gui.buttons.storage-lore").stream()
+                .map(Utils::colorify)
+                .collect(Collectors.toList());
+    }
+
+    public List<String> buttonAdminViewLore() {
+        return getList("shop-gui.buttons.adminview-lore").stream()
+                .map(Utils::colorify)
+                .collect(Collectors.toList());
+    }
+
     public String settingsButton() {
         return Utils.colorify(getString("shop-gui.buttons.settings"));
     }
+
+    public String settingsAdminButton() {
+        return Utils.colorify(getString("shop-gui.buttons.settings-admin"));
+    }
+
+    public List<String> settingsButtonLore() {
+        return getList("shop-gui.buttons.settings-lore").stream()
+                .map(s -> Utils.colorify(s))
+                .collect(Collectors.toList());
+    }
+
     public String disabledButtonTitle() {
         return Utils.colorify(getString("shop-gui.buttons.disabled-title"));
     }
@@ -340,6 +373,10 @@ public class LanguageManager {
                 .map(s -> Utils.colorify(s.replace("%status%", status))).collect(Collectors.toList());
     }
     //settings.buttons.disableBuying.
+    public String enableBuyingButtonTitle() {
+        return Utils.colorify(getString("settings.buttons.enableBuying.Title"));
+    }
+
     public String disableBuyingButtonTitle() {
         return Utils.colorify(getString("settings.buttons.disableBuying.Title"));
     }
@@ -347,6 +384,7 @@ public class LanguageManager {
         return getList("settings.buttons.disableBuying.Lore").stream()
                 .map(s -> Utils.colorify(s.replace("%status%", status))).collect(Collectors.toList());
     }
+
     //settings.buttons.disableSelling.
     public String disableSellingButtonTitle() {
         return Utils.colorify(getString("settings.buttons.disableSelling.Title"));
@@ -362,9 +400,12 @@ public class LanguageManager {
     public String nobodyStatusAdmins() {
         return Utils.colorify(getString("settings.buttons.shopAdmins.nobodyStatusAdmins"));
     }
-    public List<String> shopAdminsButtonLore(String admins) {
-        return getList("settings.buttons.shopAdmins.Lore").stream()
-                .map(s -> Utils.colorify(s.replace("%admins%", admins))).collect(Collectors.toList());
+    public List<String> shopAdminsButtonLore(List<String> admins) {
+        List<String> lore = getList("settings.buttons.shopAdmins.Lore").stream()
+                .map(Utils::colorify)
+                .collect(Collectors.toList());
+        lore.addAll(admins);
+        return lore;
     }
     //settings.buttons.sharedIncome.
     public String shareIncomeButtonTitle() {
@@ -446,6 +487,10 @@ public class LanguageManager {
         }
         return output;
     }
+    public String priceChangeWaiting() {
+        return Utils.colorify(getString("settings.chat.shopAdmins.changePriceWaiting"));
+    }
+
     //settings.buttons.other.
     public String backToShopGuiButton() {
         return Utils.colorify(getString("settings.buttons.other.backToShopGuiButton"));

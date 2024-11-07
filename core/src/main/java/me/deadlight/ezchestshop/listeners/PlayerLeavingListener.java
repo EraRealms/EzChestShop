@@ -9,9 +9,8 @@ public class PlayerLeavingListener implements Listener {
     @EventHandler
     public void onLeave(PlayerQuitEvent event) throws NoSuchFieldException, IllegalAccessException {
         Utils.versionUtils.ejectConnection(event.getPlayer());
-        if (ChatListener.chatmap.containsKey(event.getPlayer().getUniqueId())) {
-            ChatListener.chatmap.remove(event.getPlayer().getUniqueId());
-        }
+        ChatListener.chatmap.remove(event.getPlayer().getUniqueId());
+        ChatListener.PRICE_MAP.remove(event.getPlayer().getUniqueId());
         Utils.enabledOutlines.remove(event.getPlayer().getUniqueId());
     }
 

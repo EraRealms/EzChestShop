@@ -226,13 +226,7 @@ public class EcsAdmin implements CommandExecutor, TabCompleter {
                 }
 
 
-            } else {
-
-                Utils.sendVersionMessage(player);
-
             }
-
-
         } else {
             if (args.length == 1 && args[0].equalsIgnoreCase("reload")) {
                 reload();

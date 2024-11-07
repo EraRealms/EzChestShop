@@ -1,4 +1,5 @@
 package me.deadlight.ezchestshop;
+
 import com.github.Anon8281.universalScheduler.UniversalScheduler;
 import com.github.Anon8281.universalScheduler.scheduling.schedulers.TaskScheduler;
 import me.deadlight.ezchestshop.commands.CommandCheckProfits;
@@ -6,11 +7,10 @@ import me.deadlight.ezchestshop.commands.EcsAdmin;
 import me.deadlight.ezchestshop.commands.MainCommands;
 import me.deadlight.ezchestshop.data.Config;
 import me.deadlight.ezchestshop.data.DatabaseManager;
-import me.deadlight.ezchestshop.data.gui.GuiData;
 import me.deadlight.ezchestshop.data.LanguageManager;
 import me.deadlight.ezchestshop.data.ShopContainer;
+import me.deadlight.ezchestshop.data.gui.GuiData;
 import me.deadlight.ezchestshop.integrations.AdvancedRegionMarket;
-import me.deadlight.ezchestshop.listeners.ItemsAdderListener;
 import me.deadlight.ezchestshop.listeners.*;
 import me.deadlight.ezchestshop.tasks.LoadedChunksTask;
 import me.deadlight.ezchestshop.utils.*;
@@ -22,6 +22,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -92,17 +93,6 @@ public final class EzChestShop extends JavaPlugin {
         } else {
             logConsole("&c[&eEzChestShop&c] &eCurrent Protocol version initialized.");
         }
-
-        economyPluginFound = setupEconomy();
-        if (!economyPluginFound) {
-            Config.useXP = true;
-            logConsole(
-            "&c[&eEzChestShop&c] &4Cannot find vault or economy plugin. Switching to XP based economy... " +
-                "&ePlease note that you need vault and at least one economy plugin installed to use a money based system.");
-//            Bukkit.getPluginManager().disablePlugin(this);
-//            return;
-        }
-
 
         LanguageManager.loadLanguages();
         try {
@@ -285,6 +275,7 @@ public final class EzChestShop extends JavaPlugin {
     }
 
     private void registerListeners() {
+        getServer().getPluginManager().registerEvents(new AccountListener(), this);
         getServer().getPluginManager().registerEvents(new ChestOpeningListener(), this);
         getServer().getPluginManager().registerEvents(new ItemsAdderListener(new UpdateChecker()), this);
         getServer().getPluginManager().registerEvents(new BlockBreakListener(), this);
@@ -312,8 +303,8 @@ public final class EzChestShop extends JavaPlugin {
     }
 
     private void registerCommands() {
-        PluginCommand ecs = getCommand("ecs");
-        PluginCommand ecsadmin = getCommand("ecsadmin");
+        PluginCommand ecs = getCommand("cs");
+        PluginCommand ecsadmin = getCommand("csadmin");
         CommandRegister register = new CommandRegister();
         try {
             if (Config.command_shop_alias) {
@@ -331,8 +322,8 @@ public final class EzChestShop extends JavaPlugin {
     }
 
     private void registerTabCompleters() {
-        getCommand("ecs").setTabCompleter(new MainCommands());
-        getCommand("ecsadmin").setTabCompleter(new EcsAdmin());
+        getCommand("cs").setTabCompleter(new MainCommands());
+        getCommand("csadmin").setTabCompleter(new EcsAdmin());
         getCommand("checkprofits").setTabCompleter(new CommandCheckProfits());
     }
 
@@ -395,7 +386,7 @@ public final class EzChestShop extends JavaPlugin {
             EzChestShop.getPlugin().getServer().getConsoleSender().sendMessage("[Ecs-Debug] " + Utils.colorify(str));
     }
 
-    private boolean setupEconomy() {
+    public boolean setupEconomy() {
         if (getServer().getPluginManager().getPlugin("Vault") == null) {
             return false;
         }

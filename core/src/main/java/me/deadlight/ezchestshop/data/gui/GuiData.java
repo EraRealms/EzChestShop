@@ -21,6 +21,7 @@ public class GuiData {
 
     private static ContainerGui logs;
     private static ContainerGui shop;
+    private static ContainerGui ownerShop;
     private static ContainerGui settings;
     private static ContainerGui messageManager;
 
@@ -36,6 +37,7 @@ public class GuiData {
         }
         FileConfiguration guisConfig = YamlConfiguration.loadConfiguration(customConfigFile);
         shop = new ContainerGui(guisConfig, "shop-gui");
+        ownerShop = new ContainerGui(guisConfig, "owner-shop-gui");
         settings = new ContainerGui(guisConfig, "shop-settings");
         logs = new ContainerGui(guisConfig, "transaction-logs");
         messageManager = new ContainerGui(guisConfig, "hologram-messages-manager");
@@ -49,6 +51,10 @@ public class GuiData {
 
     public static ContainerGui getShop() {
         return shop.clone();
+    }
+
+    public static ContainerGui getOwnerShop() {
+        return ownerShop.clone();
     }
 
     public static ContainerGui getSettings() {

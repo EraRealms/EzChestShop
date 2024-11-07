@@ -1,20 +1,21 @@
 package me.deadlight.ezchestshop.guis;
+
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
+import me.deadlight.ezchestshop.EzChestShop;
 import me.deadlight.ezchestshop.data.Config;
+import me.deadlight.ezchestshop.data.LanguageManager;
+import me.deadlight.ezchestshop.data.ShopContainer;
 import me.deadlight.ezchestshop.data.gui.ContainerGui;
 import me.deadlight.ezchestshop.data.gui.ContainerGuiItem;
 import me.deadlight.ezchestshop.data.gui.GuiData;
-import me.deadlight.ezchestshop.data.LanguageManager;
-import me.deadlight.ezchestshop.data.ShopContainer;
-import me.deadlight.ezchestshop.EzChestShop;
 import me.deadlight.ezchestshop.listeners.ChatListener;
+import me.deadlight.ezchestshop.utils.SignMenuFactory;
+import me.deadlight.ezchestshop.utils.Utils;
 import me.deadlight.ezchestshop.utils.holograms.ShopHologram;
 import me.deadlight.ezchestshop.utils.objects.ChatWaitObject;
 import me.deadlight.ezchestshop.utils.objects.EzShop;
 import me.deadlight.ezchestshop.utils.objects.ShopSettings;
-import me.deadlight.ezchestshop.utils.SignMenuFactory;
-import me.deadlight.ezchestshop.utils.Utils;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
@@ -23,6 +24,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
+
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -111,7 +114,10 @@ public class SettingsGUI {
         if (container.hasItem("disable-buy-on") && container.hasItem("disable-buy-off")) {
             boolean isBuyDisabled = dataContainer.get(new NamespacedKey(EzChestShop.getPlugin(), "dbuy"), PersistentDataType.INTEGER) == 1;
             ContainerGuiItem buyDisabledItem = container.getItem(isBuyDisabled ? "disable-buy-on" : "disable-buy-off")
-                    .setName(lm.disableBuyingButtonTitle()).setLore(buyMessageChooser(isBuyDisabled, lm));
+                    .setName(isBuyDisabled
+                            ? lm.enableBuyingButtonTitle()
+                            : lm.disableBuyingButtonTitle())
+                    .setLore(buyMessageChooser(!isBuyDisabled, lm));
             GuiItem buyDisabled = new GuiItem(buyDisabledItem.getItem(), event -> {
                 event.setCancelled(true);
                 //start the functionality for disabling buy
@@ -139,7 +145,9 @@ public class SettingsGUI {
         if (container.hasItem("disable-sell-on") && container.hasItem("disable-sell-off")) {
             boolean isSellDisabled = dataContainer.get(new NamespacedKey(EzChestShop.getPlugin(), "dsell"), PersistentDataType.INTEGER) == 1;
             ContainerGuiItem sellDisabledItem = container.getItem(isSellDisabled ? "disable-sell-on" : "disable-sell-off")
-                    .setName(lm.disableSellingButtonTitle()).setLore(sellMessageChooser(isSellDisabled, lm));
+                    .setName(lm.disableSellingButtonTitle())
+                    // invert the boolean in order to be coherent with my description.
+                    .setLore(sellMessageChooser(!isSellDisabled, lm));
             GuiItem sellDisabled = new GuiItem(sellDisabledItem.getItem(), event -> {
                 event.setCancelled(true);
                 //start the functionality for disabling sell
@@ -166,6 +174,8 @@ public class SettingsGUI {
         //How it saves the owners? like this man
         //if empty: "none"
         //otherwise: UUID@UUID@UUID@UUID
+        // side note:
+        // ptdr il a cru qu'il avait dead ça.
         if (!isAdmin) {
             boolean hastAtLeastOneAdmin = !dataContainer.get(new NamespacedKey(EzChestShop.getPlugin(), "admins"), PersistentDataType.STRING).equals("none");
             if (container.hasItem("shop-admins")) {
@@ -175,17 +185,23 @@ public class SettingsGUI {
                     //do the job
                     if (event.getClick() == ClickType.LEFT) {
                         //left click == add admin
-
-                        ChatListener.chatmap.put(player.getUniqueId(), new ChatWaitObject("none", "add", containerBlock));
+                        if(ChatListener.register(player.getUniqueId(),
+                                new ChatWaitObject("none", "add", containerBlock))) {
+                            // notify player.
+                            player.sendMessage(lm.addingAdminWaiting());
+                        }
+                        // close inventory.
                         player.closeInventory();
-                        player.sendMessage(lm.addingAdminWaiting());
-
 
                     } else if (event.getClick() == ClickType.RIGHT) {
                         //right click == remove admin
-                        ChatListener.chatmap.put(player.getUniqueId(), new ChatWaitObject("none", "remove", containerBlock));
+                        if(ChatListener.register(player.getUniqueId(),
+                                new ChatWaitObject("none", "remove", containerBlock))) {
+                            // notify player.
+                            player.sendMessage(lm.removingAdminWaiting());
+                        }
+                        // close the inventory.
                         player.closeInventory();
-                        player.sendMessage(lm.removingAdminWaiting());
                     }
 
                 });
@@ -305,78 +321,43 @@ public class SettingsGUI {
         if (container.hasItem("change-price")) {
 
             ContainerGuiItem priceItemStack = container.getItem("change-price")
-                    .setName(lm.changePricesButtonTitle()).setLore(lm.changePricesButtonLore());
+                    .setName(lm.changePricesButtonTitle())
+                    .setLore(lm.changePricesButtonLore());
             GuiItem priceItem = new GuiItem(priceItemStack.getItem(), event -> {
                 event.setCancelled(true);
-                if (event.getClick() == ClickType.LEFT) {
-                    player.closeInventory();
-                    player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 1.0f, 1.0f);
-                    SignMenuFactory signMenuFactory = new SignMenuFactory(EzChestShop.getPlugin());
-                    SignMenuFactory.Menu menu = signMenuFactory.newMenu(lm.changePriceSingGUI(false))
-                            .reopenIfFail(false).response((thatplayer, strings) -> {
-                                try {
-                                    if (strings[0].equalsIgnoreCase("")) {
-                                        return false;
-                                    }
-                                    if (Utils.isNumeric(strings[0])) {
-                                        double amount = Double.parseDouble(strings[0]);
-                                        if (amount < 0) {
-                                            player.sendMessage(lm.negativePrice());
-                                            return false;
-                                        }
-                                        EzChestShop.getScheduler().scheduleSyncDelayedTask(() -> {
-                                                    // If these checks complete successfully continue.
-                                                    if (changePrice(containerBlock.getState(), false, amount, player, containerBlock)) {
-                                                        ShopContainer.changePrice(containerBlock.getState(), amount, false);
-                                                        ShopHologram.getHologram(containerBlock.getLocation(), player).updateSellPrice();
-                                                        player.sendMessage(lm.shopSellPriceUpdated());
-                                                    }
-                                                });
-                                    } else {
-                                        thatplayer.sendMessage(lm.wrongInput());
-                                    }
-
-                                } catch (Exception e) {
-                                    return false;
-                                }
-                                return true;
-                            });
-                    menu.open(player);
-                } else if (event.getClick() == ClickType.RIGHT) {
-                    player.closeInventory();
-                    player.playSound(player.getLocation(), Sound.ITEM_BOOK_PAGE_TURN, 1.0f, 1.0f);
-                    SignMenuFactory signMenuFactory = new SignMenuFactory(EzChestShop.getPlugin());
-                    SignMenuFactory.Menu menu = signMenuFactory.newMenu(lm.changePriceSingGUI(true))
-                            .reopenIfFail(false).response((thatplayer, strings) -> {
-                                try {
-                                    if (strings[0].equalsIgnoreCase("")) {
-                                        return false;
-                                    }
-                                    if (Utils.isNumeric(strings[0])) {
-                                        double amount = Double.parseDouble(strings[0]);
-                                        if (amount < 0) {
-                                            player.sendMessage(lm.negativePrice());
-                                            return false;
-                                        }
-                                        EzChestShop.getScheduler().scheduleSyncDelayedTask(() -> {
-                                                    // If these checks complete successfully continue.
-                                                    if (changePrice(containerBlock.getState(), true, amount, player, containerBlock)) {
-                                                        ShopContainer.changePrice(containerBlock.getState(), amount, true);
-                                                        ShopHologram.getHologram(containerBlock.getLocation(), player).updateBuyPrice();
-                                                        player.sendMessage(lm.shopBuyPriceUpdated());
-                                                    }
-                                                });
-                                    } else {
-                                        thatplayer.sendMessage(lm.wrongInput());
-                                    }
-
-                                } catch (Exception e) {
-                                    return false;
-                                }
-                                return true;
-                            });
-                    menu.open(player);
-                }
+                // register the player.
+                boolean success = ChatListener.register(player.getUniqueId(), (message -> {
+                    // retrieve the amount.
+                    double amount;
+                    try {
+                        amount = Double.parseDouble(message);
+                    } catch (NumberFormatException exception) {
+                        return;
+                    }
+                    // check if the amount is negative.
+                    if (amount < 0) {
+                        player.sendMessage(lm.negativePrice());
+                        return;
+                    }
+                    EzChestShop.getScheduler().scheduleSyncDelayedTask(() -> {
+                        // If these checks complete successfully continue.
+                        if (changePrice(containerBlock.getState(), true, amount, player, containerBlock)) {
+                            // change buy & sell price so they are the same & don't break anything.
+                            ShopContainer.changePrice(containerBlock.getState(), amount, true);
+                            ShopContainer.changePrice(containerBlock.getState(), amount, false);
+                            // update only the buy price.
+                            ShopHologram.getHologram(containerBlock.getLocation(), player).updateBuyPrice();
+                            player.sendMessage(lm.shopBuyPriceUpdated());
+                        }
+                    });
+                }));
+                // close the inventory.
+                player.closeInventory();
+                // check if we should send the message.
+                if(!success)
+                    return;
+                // notify player.
+                player.sendMessage(lm.priceChangeWaiting());
             });
             Utils.addItemIfEnoughSlots(gui, priceItemStack.getSlot(), priceItem);
         }
@@ -483,34 +464,20 @@ public class SettingsGUI {
     }
 
      private List<String> signLoreChooser(boolean data, PersistentDataContainer container, LanguageManager lm) {
-        List<String> lores;
-        String status;
+        List<String> lore = new ArrayList<>();
 
         if (data) {
             //has at least one admin
-            StringBuilder adminsListString = new StringBuilder("&a");
+            StringBuilder adminsListString = new StringBuilder();
             List<UUID> admins = Utils.getAdminsList(container);
-            boolean first = false;
             for (UUID admin : admins) {
                 OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(admin);
-                if (first) {
-
-                    adminsListString.append(", ").append(offlinePlayer.getName());
-
-                } else {
-                    adminsListString.append(offlinePlayer.getName());
-                    first = true;
-                }
+                lore.add(String.format("%s %s", " §8▸§7", offlinePlayer.getName()));
             }
-
-            status = adminsListString.toString();
         } else {
-            status = lm.nobodyStatusAdmins();
+            lore.add(lm.nobodyStatusAdmins());
         }
-
-        lores = lm.shopAdminsButtonLore(status);
-
-        return lores;
+        return lm.shopAdminsButtonLore(lore);
      }
 
      private boolean checkIfOn(Material itemMat) {

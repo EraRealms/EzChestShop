@@ -1,11 +1,11 @@
 package me.deadlight.ezchestshop.listeners;
 
+import me.deadlight.ezchestshop.EzChestShop;
 import me.deadlight.ezchestshop.data.LanguageManager;
 import me.deadlight.ezchestshop.data.ShopContainer;
-import me.deadlight.ezchestshop.EzChestShop;
 import me.deadlight.ezchestshop.guis.SettingsGUI;
-import me.deadlight.ezchestshop.utils.objects.ChatWaitObject;
 import me.deadlight.ezchestshop.utils.Utils;
+import me.deadlight.ezchestshop.utils.objects.ChatWaitObject;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.OfflinePlayer;
@@ -18,16 +18,40 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 
+import javax.annotation.Nonnull;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public class ChatListener implements Listener {
 
+    // dirty but I don't care.
+    public static Map<UUID, Consumer<String>> PRICE_MAP = new HashMap<>();
     public static HashMap<UUID, ChatWaitObject> chatmap = new HashMap<>();
+
     public static LanguageManager lm = new LanguageManager();
     public static void updateLM(LanguageManager languageManager) {
         ChatListener.lm = languageManager;
+    }
+
+    public static boolean register(@Nonnull UUID uniqueId, @Nonnull ChatWaitObject object) {
+        // check if the player is already in the chat.
+        if(chatmap.containsKey(uniqueId))
+            return false;
+        // register the player.
+        chatmap.put(uniqueId, object);
+        return true;
+    }
+
+    public static boolean register(@Nonnull UUID uniqueId, @Nonnull Consumer<String> consumer) {
+        // check if the player is already in the chat.
+        if(PRICE_MAP.containsKey(uniqueId))
+            return false;
+        // register the player.
+        PRICE_MAP.put(uniqueId, consumer);
+        return true;
     }
 
     @EventHandler
@@ -79,7 +103,17 @@ public class ChatListener implements Listener {
             }
 
         }
-
+        // try to retrieve the message consumer.
+        Consumer<String> messageConsumer = PRICE_MAP.get(player.getUniqueId());
+        // check if there's no such consumer.
+        if(messageConsumer == null)
+            return;
+        // unregister the player.
+        PRICE_MAP.remove(player.getUniqueId());
+        // cancel the event.
+        event.setCancelled(true);
+        // run the consumer.
+        messageConsumer.accept(event.getMessage());
     }
 
 

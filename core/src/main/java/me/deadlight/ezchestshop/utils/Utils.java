@@ -587,7 +587,6 @@ public class Utils {
                 Config.useXP ? XPEconomy.getXP(offlinePlayer) : EzChestShop.getEconomy().getBalance(offlinePlayer);
         int emptyCount = playerEmptyCount(playerInventory, itemStack);
         int howManyExists = howManyOfItemExists(storageInventory, itemStack);
-
         for (int num = 0; num < emptyCount; num++) {
             if (possibleCount + 1 > howManyExists) {
                 break;

@@ -1,24 +1,24 @@
 package me.deadlight.ezchestshop.data;
+
+import me.deadlight.ezchestshop.EzChestShop;
 import me.deadlight.ezchestshop.enums.Changes;
 import me.deadlight.ezchestshop.events.PlayerTransactEvent;
-import me.deadlight.ezchestshop.EzChestShop;
+import me.deadlight.ezchestshop.utils.Utils;
+import me.deadlight.ezchestshop.utils.WebhookSender;
+import me.deadlight.ezchestshop.utils.XPEconomy;
 import me.deadlight.ezchestshop.utils.holograms.ShopHologram;
 import me.deadlight.ezchestshop.utils.objects.EzShop;
 import me.deadlight.ezchestshop.utils.objects.ShopSettings;
 import me.deadlight.ezchestshop.utils.objects.SqlQueue;
-import me.deadlight.ezchestshop.utils.Utils;
-import me.deadlight.ezchestshop.utils.WebhookSender;
-import me.deadlight.ezchestshop.utils.XPEconomy;
-import net.milkbowl.vault.economy.Economy;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.TileState;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
+
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,7 +33,6 @@ import java.util.stream.Collectors;
 
 public class ShopContainer {
 
-    private static Economy econ = EzChestShop.getEconomy();
     private static HashMap<Location, EzShop> shopMap = new HashMap<>();
 
     static DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
@@ -427,7 +426,7 @@ public class ShopContainer {
         if (Config.useXP) {
             XPEconomy.depositPlayer(deposit, price);
         } else {
-            econ.depositPlayer(deposit, price);
+            EzChestShop.getEconomy().depositPlayer(deposit, price);
         }
 
     }
@@ -437,7 +436,7 @@ public class ShopContainer {
         if (Config.useXP) {
             return XPEconomy.withDrawPlayer(deposit, price);
         } else {
-            return econ.withdrawPlayer(deposit, price).transactionSuccess();
+            return EzChestShop.getEconomy().withdrawPlayer(deposit, price).transactionSuccess();
         }
 
     }
@@ -446,7 +445,7 @@ public class ShopContainer {
         if (Config.useXP) {
             return XPEconomy.has(player, price);
         } else  {
-            double balance = econ.getBalance(player);
+            double balance = EzChestShop.getEconomy().getBalance(player);
             return !(balance < price);
         }
     }

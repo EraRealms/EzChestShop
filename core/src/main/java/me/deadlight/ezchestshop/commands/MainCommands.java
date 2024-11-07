@@ -64,10 +64,10 @@ public class MainCommands implements CommandExecutor, TabCompleter {
 
                 if (mainarg.equalsIgnoreCase("create") && target != null) {
 
-                    if (args.length >= 3) {
-                        if (Utils.isNumeric(args[1]) && Utils.isNumeric(args[2])) {
+                    if (args.length >= 2) {
+                        if (Utils.isNumeric(args[1])) {
 
-                            if (isPositive(Double.parseDouble(args[1])) && isPositive(Double.parseDouble(args[2]))) {
+                            if (isPositive(Double.parseDouble(args[1]))) {
                                 if (Config.permissions_create_shop_enabled) {
                                     // first check the world, if nothing is found return -2
                                     int maxShopsWorld = Utils.getMaxPermission(player,
@@ -347,7 +347,7 @@ public class MainCommands implements CommandExecutor, TabCompleter {
                             }
 
                             double buyprice = Double.parseDouble(args[1]);
-                            double sellprice = Double.parseDouble(args[2]);
+                            double sellprice = Double.parseDouble(args[1]);
 
                             if (Config.settings_buy_greater_than_sell && (sellprice > buyprice && buyprice != 0)) {
                                 player.sendMessage(lm.buyGreaterThanSellRequired());
