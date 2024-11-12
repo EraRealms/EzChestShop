@@ -195,6 +195,10 @@ public class LanguageManager {
         return languageConfig.getStringList(string);
     }
 
+    public String copySettingsFirst() {
+        return Utils.colorify(getString("settings.copy-settings-first"));
+    }
+
     public String buyAllTitle() {
         return Utils.colorify(getString("shop-gui.buttons.buy-all-title"));
     }
@@ -415,6 +419,11 @@ public class LanguageManager {
         return getList("settings.buttons.sharedIncome.Lore").stream()
                 .map(s -> Utils.colorify(s.replace("%status%", admins))).collect(Collectors.toList());
     }
+    public String priceOutOfRange(int maximumPrice) {
+        return Utils.colorify(getString("command-messages.outside-range-price"))
+                .replace("%maximum-amount%", Utils.formatNumber(maximumPrice, Utils.FormatType.CHAT));
+    }
+
     //settings.buttons.hologramRotation.
     public String rotateHologramButtonTitle() {return Utils.colorify(getString("settings.buttons.hologramRotation.Title"));}
     public List<String> rotateHologramButtonLore(String rotation) {
@@ -556,8 +565,9 @@ public class LanguageManager {
         return Utils.colorify(getString("settings.chat.sharedIncome.MessageOff"));
     }
     //settings.chat.copy-paste.
-    public BaseComponent[] copiedShopSettings(String hover) { return MineDown.parse(
-            getString("settings.chat.copy-paste.copiedShopSettings").replace("%settings%", hover)); }
+    public String copiedShopSettings() {
+        return Utils.colorify(getString("settings.chat.copy-paste.copiedShopSettings"));
+    }
     public String pastedShopSettings() { return Utils.colorify(getString("settings.chat.copy-paste.pastedShopSettings")); }
     //settings.chat.hologramRotation.
     public String rotateHologramInChat(String rotation) {
@@ -748,9 +758,6 @@ public class LanguageManager {
 
 
     //command-messages.
-    public String negativePrice() {
-        return Utils.colorify(getString("command-messages.negativeprice"));
-    }
     public String notenoughARGS() {
         return Utils.colorify(getString("command-messages.notenoughargs"));
     }
@@ -778,27 +785,8 @@ public class LanguageManager {
     public String holdSomething() {
         return Utils.colorify(getString("command-messages.holdsomething"));
     }
-    public BaseComponent[] notAllowedToCreateOrRemove(Player player) {
-        ComponentBuilder compb = new ComponentBuilder(Utils.colorify(getString("command-messages.notallowdtocreate")));
-        if (player.isOp() || player.hasPermission("ecs.admin")) {
-            compb.append(" [Hover for Server operator only infos]").color(net.md_5.bungee.api.ChatColor.RED).italic(true)
-                    .event(new ClickEvent(ClickEvent.Action.OPEN_URL, Utils.getDiscordLink()))
-                    .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                                    new ComponentBuilder("If you're unsure where this error originates from, check the following:")
-                                            .color(net.md_5.bungee.api.ChatColor.YELLOW).append(Utils.colorify(
-                                            "\n &b> &7Make sure the player can break blocks at this location. WorldGuard, " +
-                                            "Spawn Protection or Region protection plugins like Grief Prevention, etc. my prevent this." +
-                                            "\n &b> &7Make sure ECS's World Guard shop create/remove flags are set to allow (default)." +
-                                            "\n &b> &7If you are using an Anti Cheat plugin it might interfere with our break" +
-                                            " permission check and detects it as \"fast break\" hack. Disable this check if possible." +
-                                            "\n &b> &7If you are using Towny by default shops can only be created in shop plots." +
-                                            "If you want to allow shops to be created in the wilderness, " +
-                                            "you can disable this in the config under the integrations section."))
-                                            .color(net.md_5.bungee.api.ChatColor.GRAY).create()
-                            )
-                    );
-        }
-        return compb.create();
+    public String notAllowedToCreateOrRemove(Player player) {
+        return Utils.colorify(getString("command-messages.notallowdtocreate"));
     }
     public String noChest() {
         return Utils.colorify(getString("command-messages.notchest"));
