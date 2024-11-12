@@ -1,16 +1,16 @@
 package me.deadlight.ezchestshop.commands;
+
 import com.palmergames.bukkit.towny.utils.ShopPlotUtil;
+import me.deadlight.ezchestshop.EzChestShop;
 import me.deadlight.ezchestshop.data.Config;
 import me.deadlight.ezchestshop.data.DatabaseManager;
 import me.deadlight.ezchestshop.data.LanguageManager;
 import me.deadlight.ezchestshop.data.ShopContainer;
-import me.deadlight.ezchestshop.EzChestShop;
 import me.deadlight.ezchestshop.guis.SettingsGUI;
 import me.deadlight.ezchestshop.utils.BlockOutline;
-import me.deadlight.ezchestshop.utils.holograms.ShopHologram;
-import me.deadlight.ezchestshop.utils.objects.EzShop;
-import me.deadlight.ezchestshop.utils.objects.ShopSettings;
 import me.deadlight.ezchestshop.utils.Utils;
+import me.deadlight.ezchestshop.utils.holograms.ShopHologram;
+import me.deadlight.ezchestshop.utils.objects.ShopSettings;
 import me.deadlight.ezchestshop.utils.worldguard.FlagRegistry;
 import me.deadlight.ezchestshop.utils.worldguard.WorldGuardUtils;
 import me.mrCookieSlime.Slimefun.api.BlockStorage;
@@ -66,8 +66,8 @@ public class MainCommands implements CommandExecutor, TabCompleter {
 
                     if (args.length >= 2) {
                         if (Utils.isNumeric(args[1])) {
-
-                            if (isPositive(Double.parseDouble(args[1]))) {
+                            double price = Double.parseDouble(args[1]);
+                            if (price < Config.maxPrice && price > 0) {
                                 if (Config.permissions_create_shop_enabled) {
                                     // first check the world, if nothing is found return -2
                                     int maxShopsWorld = Utils.getMaxPermission(player,
@@ -98,7 +98,8 @@ public class MainCommands implements CommandExecutor, TabCompleter {
                                 }
 
                             } else {
-                                player.sendMessage(lm.negativePrice());
+                                // notify player.
+                                player.sendMessage(lm.priceOutOfRange(Config.maxPrice));
                             }
 
                         } else {
@@ -108,24 +109,10 @@ public class MainCommands implements CommandExecutor, TabCompleter {
                     } else {
                         player.sendMessage(lm.notenoughARGS());
                     }
-
                 } else if (mainarg.equalsIgnoreCase("remove") && target != null) {
                         removeShop(player ,args, target);
-
-
                 } else if (mainarg.equalsIgnoreCase("settings") && target != null) {
-
                     changeSettings(player, args, target);
-
-
-                } else if (mainarg.equalsIgnoreCase("version")) {
-
-                Utils.sendVersionMessage(player);
-
-                } else if (mainarg.equalsIgnoreCase("emptyshops")) {
-
-                    emptyShopsCommand(player);
-
                 } else {
                     sendHelp(player);
                 }
@@ -146,12 +133,11 @@ public class MainCommands implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command cmd, String label, String[] args) {
         List<String> fList = new ArrayList<>();
-        List<String> list_mainarg = Arrays.asList("create", "remove", "settings", "emptyshops" ,"version");
-        List<String> list_create_1 = Arrays.asList("[BuyPrice]");
-        List<String> list_create_2 = Arrays.asList("[SellPrice]");
-        List<String> list_settings_1 = Arrays.asList("copy", "paste", "toggle-message", "toggle-buying", "toggle-selling", "admins", "toggle-shared-income", "change-rotation", "buyprice", "sellprice"); //, "transfer-ownership"
+        List<String> list_mainarg = Arrays.asList("create", "remove", "settings");
+        List<String> list_create_1 = Arrays.asList("<prix d'achat>");
+        List<String> list_settings_1 = Arrays.asList("copy", "paste"); //, "transfer-ownership"
         List<String> list_settings_admins_2 = Arrays.asList("add", "remove", "list", "clear");
-        List<String> list_settings_paste_2 = Arrays.asList("toggle-message", "toggle-buying", "toggle-selling", "admins", "toggle-shared-income", "change-rotation");
+        List<String> list_settings_paste_2 = Arrays.asList("toggle-buying", "admins");
         List<String> list_settings_change_rotation_2 = new ArrayList<>(Utils.rotations);
         if (sender instanceof Player) {
             Player player = (Player) sender;
@@ -161,8 +147,6 @@ public class MainCommands implements CommandExecutor, TabCompleter {
                 if (args[0].equalsIgnoreCase("create")) {
                     if (args.length == 2)
                         StringUtil.copyPartialMatches(args[1], list_create_1, fList);
-                    if (args.length == 3)
-                        StringUtil.copyPartialMatches(args[2], list_create_2, fList);
                 } else if (args[0].equalsIgnoreCase("settings")) {
                     if (args.length == 2)
                         StringUtil.copyPartialMatches(args[1], list_settings_1, fList);
@@ -262,9 +246,6 @@ public class MainCommands implements CommandExecutor, TabCompleter {
                     else if (args[1].equalsIgnoreCase("buyprice") && args.length == 3) {
                         StringUtil.copyPartialMatches(args[2], list_create_1, fList);
                     }
-                    else if (args[1].equalsIgnoreCase("sellprice") && args.length == 3) {
-                        StringUtil.copyPartialMatches(args[2], list_create_2, fList);
-                    }
 //                    else if (args[1].equalsIgnoreCase("transfer-ownership")) {
 //                        // If null is returned a list of online players will be suggested
 //                        return null;
@@ -298,7 +279,7 @@ public class MainCommands implements CommandExecutor, TabCompleter {
 
             if (EzChestShop.worldguard) {
                 if (!WorldGuardUtils.queryStateFlag(FlagRegistry.CREATE_SHOP, player)) {
-                    player.spigot().sendMessage(lm.notAllowedToCreateOrRemove(player));
+                    player.sendMessage(lm.notAllowedToCreateOrRemove(player));
                     return;
                 }
             }
@@ -311,12 +292,12 @@ public class MainCommands implements CommandExecutor, TabCompleter {
 
                     if (EzChestShop.towny && Config.towny_integration_shops_only_in_shop_plots) {
                         if (!ShopPlotUtil.isShopPlot(target.getLocation())) {
-                            player.spigot().sendMessage(lm.notAllowedToCreateOrRemove(player));
+                            player.sendMessage(lm.notAllowedToCreateOrRemove(player));
                             return;
                         }
                         if (!(ShopPlotUtil.doesPlayerOwnShopPlot(player, target.getLocation()) ||
                                 ShopPlotUtil.doesPlayerHaveAbilityToEditShopPlot(player, target.getLocation()))) {
-                            player.spigot().sendMessage(lm.notAllowedToCreateOrRemove(player));
+                            player.sendMessage(lm.notAllowedToCreateOrRemove(player));
                             return;
                         }
                     }
@@ -405,7 +386,7 @@ public class MainCommands implements CommandExecutor, TabCompleter {
 
                 }
                     else {
-                        player.spigot().sendMessage(lm.notAllowedToCreateOrRemove(player));
+                        player.sendMessage(lm.notAllowedToCreateOrRemove(player));
                     }
                 } else {
 
@@ -428,7 +409,7 @@ public class MainCommands implements CommandExecutor, TabCompleter {
         if (blockState != null) {
             if (EzChestShop.worldguard) {
                 if (!WorldGuardUtils.queryStateFlag(FlagRegistry.REMOVE_SHOP, player)) {
-                    player.spigot().sendMessage(lm.notAllowedToCreateOrRemove(player));
+                    player.sendMessage(lm.notAllowedToCreateOrRemove(player));
                     return;
                 }
             }
@@ -477,7 +458,6 @@ public class MainCommands implements CommandExecutor, TabCompleter {
             if (blockState != null) {
                 SettingsGUI settingsGUI = new SettingsGUI();
                 settingsGUI.showGUI(player, blockState.getBlock(), false);
-                player.playSound(player.getLocation(), Sound.BLOCK_PISTON_EXTEND, 0.5f, 0.5f);
             }
         } else if (args.length >= 2) {
 
@@ -491,107 +471,8 @@ public class MainCommands implements CommandExecutor, TabCompleter {
                 } else {
                     pasteShopSettings(player, target);
                 }
-            } else if (settingarg.equalsIgnoreCase("toggle-message")) {
-                modifyShopSettings(player, SettingType.TOGGLE_MSG, "", target);
-            } else if (settingarg.equalsIgnoreCase("toggle-buying")) {
-                modifyShopSettings(player, SettingType.DBUY, "", target);
-            } else if (settingarg.equalsIgnoreCase("toggle-selling")) {
-                modifyShopSettings(player, SettingType.DSELL, "", target);
-            } else if (settingarg.equalsIgnoreCase("toggle-shared-income")) {
-                modifyShopSettings(player, SettingType.SHAREINCOME, "", target);
-            } else if (settingarg.equalsIgnoreCase("change-rotation")) {
-                if (args.length == 3) {
-                    modifyShopSettings(player, SettingType.ROTATION, args[2], target);
-                } else {
-                    modifyShopSettings(player, SettingType.ROTATION, "", target);
-                }
-            } else if (settingarg.equalsIgnoreCase("admins")) {
-                if (args.length == 3) {
-                    if (args[2].equalsIgnoreCase("clear")) {
-                        modifyShopSettings(player, SettingType.ADMINS, "clear", target);
-                    } else if (args[2].equalsIgnoreCase("list")) {
-                        BlockState blockState = getLookedAtBlockStateIfOwner(player, true, false, target);
-                        if (blockState != null) {
-                            String adminString = ShopContainer.getShopSettings(
-                                    blockState.getLocation()).getAdmins();
-                            if (adminString != null && !adminString.equalsIgnoreCase("none")) {
-                                List<String> adminList = Arrays.asList(adminString.split("@"));
-                                if (adminList != null && !adminList.isEmpty()) {
-                                    player.sendMessage(ChatColor.GREEN + "Admins:\n" + ChatColor.GRAY + " - " + ChatColor.YELLOW + adminList.stream().map(s -> Bukkit.getOfflinePlayer(
-                                            UUID.fromString(s)).getName()).collect(
-                                            Collectors.joining("\n" + ChatColor.GRAY + " - " + ChatColor.YELLOW)));
-                                } else {
-                                    player.sendMessage(ChatColor.GREEN + "Admins:\n" + ChatColor.GRAY + " - " + ChatColor.YELLOW + lm.nobodyStatusAdmins());
-                                }
-                            }else {
-                                player.sendMessage(ChatColor.GREEN + "Admins:\n" + ChatColor.GRAY + " - " + ChatColor.YELLOW + lm.nobodyStatusAdmins());
-                            }
-                        }
-                    }
-                } else if (args.length == 4) {
-                    if (args[2].equalsIgnoreCase("add")) {
-                        modifyShopSettings(player, SettingType.ADMINS, "+" + args[3], target);
-                    } else if (args[2].equalsIgnoreCase("remove")) {
-                        modifyShopSettings(player, SettingType.ADMINS, "-" + args[3], target);
-                    }
-                }
-            } else if (settingarg.equalsIgnoreCase("buyprice") || settingarg.equalsIgnoreCase("sellprice")) {
-                if (args.length == 3) {
-                    BlockState blockState = getLookedAtBlockStateIfOwner(player, true, false, target);
-                    boolean isBuy = settingarg.equalsIgnoreCase("buyprice");
-                    try {
-                        if (blockState != null) {
-                            double price = Double.parseDouble(args[2]);
-                            if (price < 0) {
-                                player.sendMessage(lm.negativePrice());
-                                return;
-                            }
-                            EzShop shop = ShopContainer.getShop(blockState.getLocation());
-                            // Enforce buy > sell.
-                            if (Config.settings_buy_greater_than_sell) {
-                                if (
-                                        (isBuy && shop.getSellPrice() > price && price != 0) ||
-                                        (!isBuy && price > shop.getBuyPrice() && shop.getBuyPrice() != 0)
-                                ) {
-                                    player.sendMessage(lm.buyGreaterThanSellRequired());
-                                    return;
-                                }
-                            }
-                            // Revert from disabling buy sell.
-                            if (Config.settings_zero_equals_disabled && isBuy && shop.getBuyPrice() == 0 && price != 0) {
-                                modifyShopSettings(player, SettingType.DBUY, "false", target);
-                            }
-                            if (Config.settings_zero_equals_disabled && !isBuy && shop.getSellPrice() == 0 && price != 0) {
-                                modifyShopSettings(player, SettingType.DSELL, "false", target);
-                            }
-                            // Disable buy/sell
-                            if (price == 0 && Config.settings_zero_equals_disabled) {
-                                if (isBuy && shop.getBuyPrice() != 0) {
-                                    modifyShopSettings(player, SettingType.DBUY, "true", target);
-                                }
-                                if (!isBuy && shop.getSellPrice() != 0) {
-                                    modifyShopSettings(player, SettingType.DSELL, "true", target);
-                                }
-                            }
-                            // if any update happend get the block again.
-                            blockState = getLookedAtBlockStateIfOwner(player, true, false, target);
-                            // Change the price
-                            ShopContainer.changePrice(blockState, price, isBuy);
-                            // Update the hologram
-                            ShopHologram hologram = ShopHologram.getHologram(blockState.getLocation(), player);
-                            if (isBuy) {
-                                hologram.updateBuyPrice();
-                            } else {
-                                hologram.updateSellPrice();
-                            }
-                            player.sendMessage(isBuy ? lm.shopBuyPriceUpdated() : lm.shopSellPriceUpdated());
-                        }
-                    } catch (NumberFormatException e) {
-                        player.sendMessage(lm.wrongInput());
-                    }
-                } else {
-                    sendHelp(player);
-                }
+            } else {
+                sendHelp(player);
             }
             //TODO This setting is kinda broken rn:
             // Imagine a player creating a shop buying dirt for 9999 cash.
@@ -648,12 +529,7 @@ public class MainCommands implements CommandExecutor, TabCompleter {
             }
             settings.setRotation(settings.getRotation() == null ? Config.settings_defaults_rotation : settings.getRotation());
             settingsHashMap.put(player.getUniqueId(), settings.clone());
-            player.spigot().sendMessage(lm.copiedShopSettings(lm.toggleTransactionMessageButton() + ": "  + (settings.isMsgtoggle() ? lm.statusOn() : lm.statusOff()) + "\n" +
-                    lm.disableBuyingButtonTitle() + ": "  + (settings.isDbuy() ? lm.statusOn() : lm.statusOff()) + "\n" +
-                    lm.disableSellingButtonTitle() + ": "  + (settings.isDsell() ? lm.statusOn() : lm.statusOff()) + "\n" +
-                    lm.shopAdminsButtonTitle() + ": " + net.md_5.bungee.api.ChatColor.GREEN + adminString + "\n" +
-                    lm.shareIncomeButtonTitle() + ": "  + (settings.isShareincome() ? lm.statusOn() : lm.statusOff()) + "\n" +
-                    lm.rotateHologramButtonTitle() + ": " + lm.rotationFromData(settings.getRotation())));
+            player.sendMessage(lm.copiedShopSettings());
         }
     }
 
@@ -663,6 +539,11 @@ public class MainCommands implements CommandExecutor, TabCompleter {
             // owner confirmed
             PersistentDataContainer container = ((TileState) blockState).getPersistentDataContainer();
             ShopSettings settings = settingsHashMap.get(player.getUniqueId());
+            if(settings == null) {
+                // notify player.
+                player.sendMessage(lm.copySettingsFirst());
+                return;
+            }
             DatabaseManager db = EzChestShop.getPlugin().getDatabase();
             String sloc = Utils.LocationtoString(blockState.getLocation());
             String admins = settings.getAdmins() == null ? "none" : settings.getAdmins();
@@ -871,8 +752,13 @@ public class MainCommands implements CommandExecutor, TabCompleter {
                     } else if (data.contains("none@")) {
                         data = data.replace("none@", "");
                     }
+                    // parse.
+                    String admins = settings.getAdmins() == null
+                            ? "none"
+                            : settings.getAdmins();
+                    // update data.
                     settings.setAdmins(data);
-                    String admins = settings.getAdmins() == null ? "none" : settings.getAdmins();
+                    // update database.
                     db.setString("location", sloc,
                             "admins", "shopdata", admins);
                     container.set(new NamespacedKey(EzChestShop.getPlugin(), "admins"), PersistentDataType.STRING,
@@ -1030,7 +916,7 @@ public class MainCommands implements CommandExecutor, TabCompleter {
                         }
                     } else if (sendErrors) {
                         if (isCreateOrRemove) {
-                            player.spigot().sendMessage(lm.notAllowedToCreateOrRemove(player));
+                            player.sendMessage(lm.notAllowedToCreateOrRemove(player));
                         } else {
                             player.sendMessage(lm.notAChestOrChestShop());
                         }
