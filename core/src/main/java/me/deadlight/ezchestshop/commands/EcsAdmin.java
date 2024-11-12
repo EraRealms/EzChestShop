@@ -84,15 +84,15 @@ public class EcsAdmin implements CommandExecutor, TabCompleter {
                         Block target = getCorrectBlock(player.getTargetBlockExact(6));
                         if (target != null) {
                             if (size >= 3) {
-
-                                if (isPositive(Double.parseDouble(args[1])) && isPositive(Double.parseDouble(args[2]))) {
+                                double price = Double.parseDouble(args[1]);
+                                if (price < Config.maxPrice && price > 0) {
                                     try {
                                         createShop(player, args, target);
                                     } catch (IOException e) {
                                         e.printStackTrace();
                                     }
                                 } else {
-                                    player.sendMessage(lm.negativePrice());
+                                    player.sendMessage(lm.priceOutOfRange(Config.maxPrice));
                                 }
 
 
@@ -343,12 +343,12 @@ public class EcsAdmin implements CommandExecutor, TabCompleter {
                             if (EzChestShop.worldguard) {
                                 if (container.get(new NamespacedKey(EzChestShop.getPlugin(), "adminshop"), PersistentDataType.INTEGER) == 1) {
                                     if (!WorldGuardUtils.queryStateFlag(FlagRegistry.REMOVE_ADMIN_SHOP, player)) {
-                                        player.spigot().sendMessage(lm.notAllowedToCreateOrRemove(player));
+                                        player.sendMessage(lm.notAllowedToCreateOrRemove(player));
                                         return;
                                     }
                                 } else {
                                     if (!WorldGuardUtils.queryStateFlag(FlagRegistry.REMOVE_SHOP, player)) {
-                                        player.spigot().sendMessage(lm.notAllowedToCreateOrRemove(player));
+                                        player.sendMessage(lm.notAllowedToCreateOrRemove(player));
                                         return;
                                     }
                                 }
@@ -439,7 +439,7 @@ public class EcsAdmin implements CommandExecutor, TabCompleter {
 
             if (EzChestShop.worldguard) {
                 if (!WorldGuardUtils.queryStateFlag(FlagRegistry.CREATE_ADMIN_SHOP, player)) {
-                    player.spigot().sendMessage(lm.notAllowedToCreateOrRemove(player));
+                    player.sendMessage(lm.notAllowedToCreateOrRemove(player));
                     return;
                 }
             }
@@ -475,7 +475,7 @@ public class EcsAdmin implements CommandExecutor, TabCompleter {
                                 }
 
                                 double buyprice = Double.parseDouble(args[1]);
-                                double sellprice = Double.parseDouble(args[2]);
+                                double sellprice = Double.parseDouble(args[1]);
 
                                 int isDBuy = Config.settings_zero_equals_disabled ?
                                         (buyprice == 0 ? 1 : (Config.settings_defaults_dbuy ? 1 : 0))
@@ -635,7 +635,7 @@ public class EcsAdmin implements CommandExecutor, TabCompleter {
                         }
                     } else if (sendErrors) {
                         if (isCreateOrRemove) {
-                            player.spigot().sendMessage(lm.notAllowedToCreateOrRemove(player));
+                            player.sendMessage(lm.notAllowedToCreateOrRemove(player));
                         } else {
                             player.sendMessage(lm.notAChestOrChestShop());
                         }
