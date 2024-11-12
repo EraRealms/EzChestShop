@@ -335,8 +335,8 @@ public class SettingsGUI {
                         return;
                     }
                     // check if the amount is negative.
-                    if (amount < 0) {
-                        player.sendMessage(lm.negativePrice());
+                    if (amount < 1) {
+                        player.sendMessage(lm.priceOutOfRange(Config.maxPrice));
                         return;
                     }
                     EzChestShop.getScheduler().scheduleSyncDelayedTask(() -> {

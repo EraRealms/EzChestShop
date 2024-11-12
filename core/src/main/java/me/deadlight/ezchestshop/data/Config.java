@@ -16,6 +16,7 @@ public class Config {
     public static String currency;
     public static boolean useXP;
 
+    public static int maxPrice;
     public static boolean showholo;
     public static List<String> holostructure;
     public static List<String> holostructure_admin;
@@ -109,6 +110,7 @@ public class Config {
         currency = config.getString("economy.server-currency");
         useXP = EzChestShop.economyPluginFound ? config.getBoolean("economy.use-xp") : true;
 
+        maxPrice = config.getInt("shops.maximum-price");
         showholo = config.getBoolean("shops.hologram.show-holograms");
         holostructure = config.getStringList("shops.hologram.holo-structure");
         Collections.reverse(holostructure);
